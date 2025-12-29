@@ -11,6 +11,13 @@ _start:
 
     mov ax, 0x0F49     ; 'I'
     mov [edi+2], ax
+    call delayL
     call kmain
     jmp $
 
+delayL:
+    mov ecx, 10000000   
+.loop:
+    dec ecx
+    jnz .loop
+    ret

@@ -18,20 +18,22 @@ start:
     ; Save boot drive ID
     mov [boot_drive], dl
 
-    ; --- Visual Check 1: Real Mode ---
+   ;Real
     mov si, msg_step1
     call print_string
     call delay
-
-    ; --- Visual Check 2: A20 Gate ---
+    call delayL
+    
+    ;A20
     in al, 0x92
     or al, 2
     out 0x92, al
     mov si, msg_step2
     call print_string
+    call delayL
     call delay
 
-    ; --- Visual Check 3: Loading Kernel ---
+    ; Kernel
     mov si, msg_step3
     call print_string
     
@@ -41,20 +43,24 @@ start:
 	call load_stage2
 	;jmp 0x1000:0x0000
 
-    ; --- Visual Check 4: Entering PM ---
+    ; PM
     mov si, msg_step4
     call print_string
+    
+    call delayL
     call delay
+    
 
-    ; Switch to Protected Mode
+    mov ax, 0x0013
+    int 0x10
     cli
     lgdt [gdt_descriptor]
     mov eax, cr0
     or eax, 1
     mov cr0, eax
+    
     jmp 0x08:init_pm
 
-; --- 16-BIT HELPERS ---
 print_string:
     mov ah, 0x0E
 .loop:
@@ -68,7 +74,7 @@ print_string:
 
 delay:
     pusha
-    mov cx, 0x07    ; Approx 0.5s delay
+    mov cx, 0x07    
     mov dx, 0xA120
     mov ah, 0x86
     int 0x15
@@ -97,8 +103,8 @@ load_stage2:
 boot_drive  db 0
 msg_step1   db "1. Real Mode Initialized...", 13, 10, 0
 msg_step2   db "2. A20 Gate Unlocked...", 13, 10, 0
-msg_step3   db "3. Loading Kernel Sector...", 13, 10, 0
-msg_step4   db "4. Jumping to Protected Mode...", 13, 10, 0
+msg_step3   db "3. Loading Kernel...", 13, 10, 0
+msg_step4   db "4. Jumping to PM...", 13, 10, 0
 msg_disk_err db "FATAL: Disk Read Error", 0
 
 ; --- GDT ---
@@ -116,7 +122,12 @@ gdt_descriptor:
     dw gdt_end - gdt_start - 1
     dd gdt_start
 
-; -------------------------------------------------------------------------
+delayL:
+    mov ecx, 100000   ; adjust this number
+.loop:
+    dec ecx
+    jnz .loop
+    ret
 [BITS 32]
 init_pm:
     mov ax, 0x10
@@ -127,19 +138,19 @@ init_pm:
     mov ss, ax
     mov esp, 0x90000
 
-    ; Clear screen
+    
     mov edi, 0xB8000
     mov ecx, 80 * 25
-    mov ax, 0x0720      ; Space
+    mov ax, 0x0720      
 .clear:
     mov [edi], ax
     add edi, 2
     loop .clear
 
-    ; Print PM Success Message
+    
     mov edi, 0xB8000
     mov esi, msg_pm_success
-    mov ah, 0x02        ; Green
+    mov ah, 0x02        
 .print:
     lodsb
     test al, al
@@ -157,7 +168,7 @@ init_pm:
 
     jmp CODE_OFFSET:0x10000
 
-msg_pm_success db "SUCCESS: Protected Mode Active. Handing over to Kernel...", 0
+msg_pm_success db "SUCCESS: PM Active.", 0
 
 times 510-($-$$) db 0
 dw 0xAA55
