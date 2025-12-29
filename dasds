@@ -1,0 +1,3 @@
+nasm -f bin boot2.asm -o boot.bin
+nasm -f elf32 kernel_entry.asm -o kernel_entry.o
+gcc -m32 -ffreestanding -fno-leading-underscore -c kernel.c -o kernel.o
