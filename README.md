@@ -1,2 +1,2 @@
 # Lumiere
-Making a OS 
+An Operating System That Plays PONG
